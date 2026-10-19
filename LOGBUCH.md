@@ -57,3 +57,7 @@ One entry per stage. Short is fine. The log is part of the submission and the ba
 ## Zum Schluss
 
 Wie habt ihr mit dem Agenten gearbeitet, und was würdet ihr der nächsten Gruppe mitgeben?
+
+
+Hi gregor ich bins Nick
+
