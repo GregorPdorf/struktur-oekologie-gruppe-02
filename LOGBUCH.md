@@ -6,9 +6,20 @@ One entry per stage. Short is fine. The log is part of the submission and the ba
 ## Etappe 0
 
 - **Was wir gemacht haben:**
+  - Repository und Projektstruktur geprüft
+  - Virtuelle Umgebung aktiviert und Python-Setup validiert
+  - `check_setup.py` ausgeführt; Python, Pakete, Git, VS Code-Integration, `.env` und API-Key geprüft
+  - Umgebung als startklar bestätigt; keine fachlichen Modell- oder Rechenfehler in dieser Phase festgestellt
 - **Wichtigste Prompts** (wörtlich kopieren):
+  - `python .\.venv\Scripts\python.exe .\check_setup.py`
 - **Was schiefging und woran wir es gemerkt haben:**
+  - Keine größeren Probleme in der Setup-Phase. Die Umgebung war bereits vorbereitet; die Validierung hat bestätigt, dass `.env` und API-Key korrekt gesetzt sind.
 - **Was wir selbst geprüft haben** (von Hand, im Plan, im Modell):
+  - Python 3.14.8 aktiv
+  - 7 Python-Pakete vorhanden
+  - Git und VS Code Terminal-Integration funktionieren
+  - `.gitignore` schützt `.env`
+  - API-Key funktioniert mit openrouter, Kreditlimit 10 $
 
 ---
 
