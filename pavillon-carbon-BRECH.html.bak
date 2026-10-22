@@ -1,0 +1,113 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Pavillon Stockerau</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#f0eeeb;color:#1a1a1a;font-family:sans-serif;overflow:hidden;height:100vh}.c{display:grid;grid-template-columns:360px 1fr;height:100vh}.s{background:#fff;padding:24px;border-right:1px solid #ddd;overflow-y:auto;display:flex;flex-direction:column;gap:18px}.card{background:linear-gradient(135deg,#1a1a1a,#333);color:#fff;padding:20px;border-radius:10px}.card .v{font-size:32px;font-weight:700}.card .l{font-size:11px;color:#aaa;margin-top:6px}.sl{font-size:10px;text-transform:uppercase;color:#999;font-weight:600;margin-bottom:6px}.br,.pb{display:flex;gap:6px;flex-wrap:wrap}.b,.p{padding:8px;border:1.5px solid #ddd;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:500}.on{border-color:#2d6a4f!important;background:#2d6a4f!important;color:#fff!important}.ch{list-style:none;max-height:30vh;overflow-y:auto}.cl{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid #eee;font-size:13px}.sw{width:12px;height:12px;border-radius:3px;margin-right:8px;flex-shrink:0}.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pt{font-size:11px;color:#999;margin-left:8px;width:40px;text-align:right}.vl{font-weight:600;margin-left:8px;width:60px;text-align:right}.main{position:relative;background:#f0eeeb}canvas{width:100%;height:100%;display:block}.info{position:absolute;top:12px;right:12px;background:rgba(255,255,255,.92);padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;pointer-events:none;border:1px solid #ddd}.tip{position:absolute;background:rgba(30,30,30,.9);color:#fff;padding:8px 12px;border-radius:8px;font-size:11px;pointer-events:none;z-index:10;opacity:0;transition:opacity .12s;max-width:200px;line-height:1.5}.tip.show{opacity:1}h1{font-size:18px;font-weight:600}.tag{font-size:11px;background:#2d6a4f;color:#fff;padding:2px 8px;border-radius:10px;margin-left:6px;display:inline-block}.meta{font-size:12px;color:#999;margin-bottom:12px}.bar{height:6px;border-radius:3px;background:linear-gradient(to right,#84d393,#ffc857,#e0603f)}.bl{display:flex;justify-content:space-between;font-size:10px;color:#999}</style></head><body>
+<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Pavillon Stockerau</title>
+<div class="c"><div class="s">
+<h1>Embodied Carbon <span class="tag">Pavillon</span></h1>
+<p class="meta">Stockerau Stahlkonstruktion LCA Dashboard</p>
+<div class="card"><div class="v" id="totalCO2">-</div><div class="l" id="totalLabel">Phase wahlen</div></div>
+<div><div class="sl">Material-Szenario</div><div class="br">
+<button class="b on" id="btnStd" onclick="window.setSc('standard')">Standard</button>
+<button class="b" id="btnAlt" onclick="window.setSc('alternative')">Alternative</button>
+</div></div>
+<div><div class="sl">Lebenszyklus-Phase</div><div class="br" id="phaseBtns">
+<button class="b on" onclick="window.setM(this)">A1</button>
+<button class="b" onclick="window.setM(this)">A2</button>
+<button class="b" onclick="window.setM(this)">A3</button>
+<button class="b" onclick="window.setM(this)">A1-A3</button>
+<button class="b" onclick="window.setM(this)">C</button>
+<button class="b" onclick="<button class="b" onclick="<bu</div></div>
+<div><div class="sl">CO2-Bandbreite (kg/m³)</div><div class="bar"></div><div class="bl"><span>Niedrig</span><span>Mittel</span><span>Hoch</span></div></div>
+<ul class="ch" id="chart"></ul></div>
+<div class="main"><canvas id="canvas"></canvas>
+<div class="info" id="info">Hover über Bauteil</div>
+<div class="tip" id="tip"></div></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.152.0/examples/jsm/controls/OrbitControls.js';
+const MATERIAL_DB={"RO":{"s":{"A1":260,"A2":30,"A3":50},"a":{"A1":170,"A2":22,"A3":38}},"FB27520":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB27512":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB22520":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB22512":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB17520":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB17512":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB237520":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB237512":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB20020":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB20012":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB162520":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB162512":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"FB333":{"s":{"A1":280,"A2":35,"A3":55},"a":{"A1":180,"A2":25,"A3":40}},"R500":{"s":{"A1":350,"A2":45,"A3":70},"a":{"A1":220,"A2":30,"A3":55}}};
+const DN={"RO":"Rohrprofil CHS 140x8","FB27520":"FS 275x20","FB27512":"FS 275x12","FB22520":"FS 225x20","FB22512":"FS 225x12","FB17520":"FS 175x20","FB17512":"FS 175x12","FB237520":"FS 237.5x20","FB237512":"FS 237.5x12","FB20020":"FS 200x20","FB20012":"FS 200x12","FB162520":"FS 162.5x20","FB162512":"FS 162.5x12","FB333":"FS 33.3x20","R500":"Rechteckstab R 500"};
+const VOL={"RO":0.8014,"FB27520":0.2124,"FB27512":0.2058,"FB22520":0.1353,"FB22512":0.1235,"FB17520":0.1136,"FB17512":0.1045,"FB237520":0.0495,"FB237512":0.0578,"FB20020":0.0430,"FB20012":0.0502,"FB162520":0.0356,"FB162512":0.0425,"FB333":0.0015,"R500":12.6775};
+var scenario='standard',currentModule='A1';
+function co2For(n,s,m){var d=MATERIAL_DB[n][s]||MATERIAL_DB[n].s;if(m==='A1')return d.A1;if(m==='A2')return d.A2;if(m==='A3')return d.A3;if(m==='A1-A3')return d.A1+d.A2+d.A3;if(m==='C')return 15;return 12;}
+function totalCo2(){var t=0;for(var k in VOL)t+=co2For(k,scenario,currentModule)*VOL[k];return t;}
+function colorScale(v){var t=Math.max(0,Math.min(1,(v-170)/180));var c1=[132,211,147],c2=[255,200,87],c3=[224,96,63];var r,g,b;if(t<.5){var f=t*2;r=c1[0]+(c2[0]-c1[0])*f;g=c1[1]+(c2[1]-c1[1])*f;b=c1[2]+(c2[2]-c1[2])*f;}else{var f=(t-.5)*2;r=c2[0]+(c3[0]-c2[0])*f;g=c2[1]+(c3[1]-c2[1])*f;b=c2[2]+(c3[2]-c2[2])*f;}return'r('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')';}
+function fmt(k){return k>=1000?(k/1000).toFixed(2)+'t':Math.round(k)+'kg';}
+var canvas=document.getElementById('canvas');
+var scene=new THREE.Scene();scene.background=new THREE.Colvar scene=new THREE.Scene();sceneEE.PerspectiveCamera(45,1,0.001,100);camera.position.set(2,1.5,2);
+var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+var controls=new OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=0.08;controls.target.set(0.1,0,0);
+scene.add(new THREE.AmbientLight(0xffffff,0.7));
+var dl=new THREE.DirectionalLight(0xffffff,0.9);dl.position.set(4,6,3);scene.add(dl);
+var fl=new THREE.DirectionalLight(0xe0d5c0,0.3);fl.position.set(-3,2,-2);scene.add(fl);
+var ground=new THREE.Mesh(new THREE.PlaneGeometry(10,10),new THREE.MeshStandardMaterial({color:'#e0ded8',roughness:0.95}));
+ground.rotation.x=-Math.PI/2;ground.position.y=-0.06;scene.add(ground);
+var grid=new THREE.GridHelper(5,50,0xd0cdc6,0xe0ddd8);grid.position.y=-0.059;scene.add(grid);
+var meshes=[];
+function addBox(x,y,z,w,h,d,lk){
+var geo=new THREE.BoxGeometry(w,h,d);geo.translate(x,y,z);
+var mat=new THREE.MeshStandardMaterial({color:new THREE.Color(colorScale(co2For(lk,scenario,currentModule))),metalness:0.2,roughness:0.7});
+var mesh=new THREE.Mesh(geo,mat);mesh.userData.lk=lk;scene.add(mesh);meshes.push(mesh);}
+function buildPavilion(){
+for(var i=0;i<meshes.length;i++){scene.remove(meshes[i]);meshes[i].geometry.dispose();meshes[i].material.dispose();}
+meshes=[];
+// Columns - RO pipes at 9 positions along Y from -7.5 to -2.5, X at 0.01, 0.08, 0.16
+var cols=[[0.01,-7.5],[0.08,-7.5],[0.16,-7.5],[0.01,-5.0],[0.08,-5.0],[0.16,-5.0],[0.01,-2.5],[0.08,-2.5],[0.16,-2.5]];
+for(var i=0;i<cols.length;i++){addBox(cols[i][0],cols[i][1],2.2,0.014,4.48,0.014,'RO');}
+// Top beams FS 275x20 along X at z=4.5
+for(var j=0;j<3;j++)for(var i=0;i<6;i++){addBox(0.01+i*0.028,-7.5+j*2.5,4.49,0.02,0.02,0.25,'FB27520');}
+// Mid-level beams FS 275x12 at z=2.24
+for(var j=0;j<3;j++)for(var i=0;i<6;i++){addBox(0.01+i*0.028,-7.5+j*2.5,2.24,0.02,0.02,0.25,'FB27512');}
+// Diagonal braces FS 225x20, 225x12
+for(var j=0;j<3;j++){addBox(0.085,-6.25+j*2.5,3.36,0.02,0.02,2.8,'FB22520');addBox(0.085,-6.25+j*2.5,3.36,0.02,0.02,2.8,'FB22512');for(var j=0;j<3;j++){addBox(0.085ar j=0;j<3;j++)for(var i=0;i<3;i++){addBox(0.05+i*0.02,-7.5+j*2.5,1.12,0.02,0.02,0.28,'FB20020');}
+// Small bars FS 175x20
+for(var j=0;j<3;j++)for(var i=0;i<3;i++){addBox(0.05+i*0.02,-7.5+j*2.5,3.36,0.02,0.02,0.28,'FB17520');}
+// Foundation blocks R500
+addBox(0.01,-7.5,0,0.05,0.05,0.05,'R500');addBox(0.16,-7.5,0,0.05,0.05,0.05,'R500');
+addBox(0.01,-2.5,0,0.05,0.05,0.05,'R500');addBox(0.16,-2.5,0,0.05,0.05,0.05,'R500');
+// Large rectangular bars
+addBox(0.085,-5.0,1.5,0.02,0.02,0.3,'FB237520');addBox(0.085,0.0,1.5,0.02,0.02,0.3,'FB237512');
+updateDash();}
+buildPavilion();
+window.addEventListener('resize',function(){var w=canvas.parentElement.clientWidth;var h=canvas.parentElement.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);});
+var raycaster=new THREE.Raycaster();var mouse=new THREE.Vector2();var hov=null;
+canvas.addEventListener('mousemove',function(e){
+var rect=canvas.getBoundingClientRect();
+mouse.x=((e.clientX-rect.left)/rect.width)*2-1;mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+raycaster.setFromCamera(mouse,camera);
+var hits=raycaster.intersectObjects(meshes);
+if(hov)hov=null;
+if(hits.length>0){
+var hit=hits[0].object;var lk=hit.userData.lk;var dn=DN[lk]||lk;
+var c=co2For(lk,scenario,currentModule);var v=VOL[lk];
+hov=hit;
+document.getElementById('tip').innerHTML='<strong>'+dn+'</strong><br>CO2: '+fmt(c*v)+' | Vol: '+v.toFixed(4)+'m3';
+document.getElementById('tip').classList.add('show');
+document.getElementById('tip').style.left=(e.clientX-rect.left+15)+'px';
+document.getElementById('tip').style.top=(e.clientY-rect.top-10)+'px';
+document.getElementById('info').textContent=dn;}
+else{documentelse{documentelse{documentelse{documentelse{documocument.getElementById('info').textContent='Hover über Bauteil';}});
+canvas.addEventListener('mouseleave',function(){document.getElementById('tip').classList.remove('show');document.getElementById('info').textContent='Hover über Bauteil';});
+canvas.addEventListener('click',function(){
+if(!hov)return;var lk=hov.userData.lk;
+for(var i=0;i<meshes.length;i++){
+if(meshes[i].userData.lk===lk){meshes[i].material.opacity=1;meshes[i].material.transparent=false;}
+else{meshes[i].material.opacity=0.1;meshes[i].material.transparent=true;}}
+setTimeout(function(){for(var i=0;i<meshes.length;i++){meshes[i].material.opacity=1;meshes[i].material.transparent=false;}},2500);});
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();
+function updateDash(){
+var t=totalCo2();var val=t>=1000?(t/1000).toFixed(3):Math.round(t);
+document.getElementById('totalCO2').innerHTML=val+'t CO2e';
+var labels={A1:'Produktion A1',A2:'Transport A2',A3:'Herstellung A3','A1-A3':'A1-A3 Gesamt',C:'End-of-Life C',D:'Nutzen D'};
+document.getElementById('totalLabel').textContent='Gesamt '+labels[currentModule];
+var ch=document.getElementById('chart');ch.innerHTML='';
+var entries=[];for(var k in VOL){entries.push({n:k,c:co2For(k,scenario,currentModule)*VOL[k],col:colorScale(co2For(k,scenario,currentModule))});}
+entries.sort(function(a,b){return b.c-a.c;});
+for(var i=0;i<entries.length;i++){
+var e=entries[i];var pct=t>0?((e.c/t)*100).toFixed(1):'0';
+var li=document.createElement('li');
+li.innerHTML='<span class="sw" style="background:'+e.col+'"></span><span class="nm">'+DN[e.n]+'</span><span class="vl">'+fmt(e.c)+'</span><span class="pt">'+pct+'%</span>';
+ch.appendChild(li);}}
+updateDash();
+window.setSc=function(s){scenario=s;document.getElementById('btnStd').className=('on'===s?'b on':'b');document.getElementById('btnAlt').className=('alternative'===s?'b on':'b');buildPavilion();};
+window.setM=function(el){currentModule=el.textContent;document.querySelectorAll('#phaseBtns .b').forEach(function(b){b.classList.remove('on');});el.classList.add('on');buildPavilion();};
+</script></body></html>

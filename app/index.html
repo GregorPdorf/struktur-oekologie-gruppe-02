@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Pavillon Stockerau -- Embodied Carbon</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:"Inter","Helvetica Neue",Arial,sans-serif;background:#0e0e10;color:#d4d4d8;-webkit-font-smoothing:antialiased}
+#app{display:flex;height:100vh;width:100vw;position:relative}
+#canvas-container{position:absolute;top:0;left:0;width:100%;height:100%}
+canvas{display:block}
+#panel{position:absolute;top:0;left:0;width:272px;height:100vh;background:rgba(14,14,16,.94);backdrop-filter:blur(12px);border-right:1px solid rgba(255,255,255,.06);padding:22px 18px;overf#panel{position:absolute;top:0;left:0;width:n;#panel{position:absolute;top:0;left:0;widtlba#panel{position:absolute;top:0;leftar-thumb{background:rgba(255,255,255,.1);border-radius:2px}
+.panel-header h1{font-size:13px;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:#fff}
+.panel-header .subtitle{font-size:9.5px;color:#71717a;line-height:1.6;margin-top:4px}
+.section-label{font-size:8.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#52525b;margin-bottom:7px;margin-top:2px}
+.toggle-group{display:flex;gap:0;border-radius:5px;overflow:hidden;border:1px solid rgba(255,255,255,.07)}
+.toggle-btn{flex:1;padding:9px 6px;text-align:center;font-size:10.5px;font-weight:500;cursor:pointer;background:transparent;color:#a1a1aa;border:none;font-family:inherit;transition:all .15s}
+.toggle-btn.active{background:#fff;color:#0e0e10}.toggle-btn:not(.active):hover{background:rgba(255,255,255,.05);color:#d4d4d8}
+.module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px}
+.module-btn{padding:7px 5px;text-align:center;font-size:9.5px;font-weight:500;cursor:pointer;background:transparent;color:#a1a1aa;border:1px solid rgba(255,255,255,.05);border-radius:4px;font-family:inherit;transition:all .15s}
+.module-btn.active{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.12)}.module-btn:not(.active):hover{background:rgba(255,255,255,.03);color:#d4d4d8}
+.module-btn .module-full{font-size:7.5px;color:#52525b;margin-top:1.5px;display:block;font-weight:400}
+.stats-row{display:flex;gap:10px}
+.stat-card{flex:1;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.04);border-radius:5px;padding:10px 9px}
+.stat-card.highlighted{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.04)}
+.stat-card .stat-label{font-size:8px;color:#52525b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;font-weight:500}
+.stat-card .stat-value{font-size:17px;font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+.stat-card .stat-unit{font-size:9px;color:#71717a;font-weight:400;margin-left:1px}
+.savings-bar{margin-top:3px}
+.savings-bar .bar-bg{height:2.5px;background:rgba(255,255,255,.04);border-radius:2px;overflow:hidden;margin-bottom:5px}
+.savings-bar .bar-fill{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:2px;transition:width .5s ease}
+.savings-bar .savings-text{font-size:9px;color:#52525b;display:flex;justify-content:space-between}
+.savings-bar .savings-value{color:#22c55e;font-weight:600}
+.legend{margin-top:auto}
+.legend .legend-title{font-size:8.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#52525b;margin-bottom:8px}
+.legend-gradient{height:7px;border-radius:4px;background:linear-gradient(90deg,#22c55e,#84cc16,#eab308,#f97316,#ef4444);margin-bottom:5px}
+.legend-labels{display:flex;justify-content:space-between;font-size:8.5px;color:#52525b;font-variant-numeric:tabular-nums}
+#breakdown{display:flex;flex-direction:column;gap:3px}
+.bk-item{display:flex;align-items:center;gap:6px}
+.bk-item .bk-name{flex:1;font-size:9px;color:#a1a1aa}
+.bk-item .bk-val{font-size:9px;color:#d4d4d8;font-variant-numeric:tabular-nums}
+#detail-panel{position:absolute;top:14px;right:14px;width:248px;background:rgba(14,14,16,.94);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.06);border-radius:7px;overflow:hidden;z-index:10;opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .2s,transform .2s;max-height:0}
+#detail-panel.visible{opacity:1;transform:translateY(0);pointer-events:auto;max-height:480px}
+.detail-header{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.06);position:relative}
+.detail-header .detail-id{font-size:8px;color:#52525b;font-family:"SF Mono","Fira Code",monospace}
+.detail-header .detail-name{font-size:12px;color:#fff;font-weight:500;margin-top:1.5px}
+.detail-close{position:absolute;top:10px;right:10px;width:18px;height:18px;border:none;background:rgba(255,255,255,.05);border-radius:3px;color:#71717a;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.detail-close:hover{background:rgba(255,255,255,.1);color:#d4d4d8}
+.detail-body{padding:12px 14px}
+.detail-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.025)}
+.detail-row:last-child{border-bottom:none}
+.detail-row .dr-label{font-size:9px;color:#71717a}
+.detail-row .dr-value{font-size:9px;color:#d4d4d8;font-weight:500;font-variant-numeric:tabular-nums}
+.detail-co2{display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.05)}
+.detail-co2-item{flex:1;text-align:center}
+.detail-co2-item .co2-val{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.detail-co2-item .co2-label{font-size:7px;color:#52525b;margin-top:1.5px;text-transform:uppercase}
+#status-bar{position:absolute;bottom:0;left:0;right:272px;height:28px;background:rgba(14,14,16,.82);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.03);display:flex;align-items:center;padding:0 14px;font-size:9px;color:#52525b;gap:16px;z-index:10}
+.status-dot{width:4px;height:4px;border-radius:50%;background:#22c55e;display:inline-block}
+.status-dot.warn{background:#eab308}
+#tooltip{position:fixed;background:rgba(14,14,16,.95);border:1px solid rgba(255,255,255,.07);border-radius:4px;padding:5px 8px;font-size:9px;color:#d4d4d8;pointer-events:none;z-index:100;opacity:0;transition:opacity .1s;white-space:nowrap;font-variant-numeric:tabular-nums}
+#tooltip.visible{opacity:1}
+#loading{position:fixed;inset:0;background:#0e0e10;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity .4s}
+#loading.hidden{opacity:0;pointer-events:none}
+.spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.08);border-top-color:rgba(255,255,255,.4);border-radius:50%;animation:spin .7s linear infinite}
+.loading-text{margin-top:14px;font-size:10px;color:#71717a}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div><div class="loading-text">Modell wird geladen...</div></div>
+<div id="app">
+  <div id="canvas-container"></div>
+  <div id="panel">
+    <div class="panel-header"><h1>Embodied Carbon</h1><div class="subtitle">Pavillon Stockerau<br>Struktur & Oekologie WS 2026</div></div>
+    <div><div class="section-label">Materialvariante</div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" data-mat="standard">Standard</button>
+        <button class="toggle-btn" data-mat="alternative">Alternative</button>
+      </div>
+    </div>
+    <div><div class="section-label">Lebenszyklusmodul</div>
+      <div class="module-grid">
+        <button class="module-btn active" data-mod="A1A3">A1-A3<span class="module-full">Rohstoff, Transport, Herstellung</span></button>
+        <button class="module-btn" data-mod="C">C<span class="module-full">Ende des Lebenszyklus</span></button>
+        <button class="module-btn" data-mod="D">D<span class="module-full">Recyclingvorteile</span></button>
+        <button class="module-btn" data-mod="TOTAL">Gesamt<span class="module-full">A1-A3 + C + D</span></button>
+      </div>
+    </div>
+    <div><div class="section-label">Kennzahlen</div>
+      <div class="stats-row">
+        <div class="stat-card highlighted"><div class="stat-label">CO2 Gesamt</div><div class="stat-value" id="total-co2">--<span class="stat-unit">kg</span></div></div>
+        <div class="stat-card"><div class="stat-label">Staebe</div><div class="stat-value" id="member-count">--</div></div>
+      </div>
+      <div class="savings-bar"><div class="bar-bg"><div class="bar-fill" id="savings-fill"></div></div>
+        <div class="savings-text">Einsparung<span class="savings-value" id="savings-pct"></span></div></div>
+    </div>
+    <div><div class="section-label">Nach Materialien</div><div id="breakdown"></div></div>
+    <div class="legend"><div class="legend-title">CO2-Skala</div>
+      <div class="legend-gradient"></div>
+      <div class="legend-labels"><span id="legend-min">0</span><span id="legend-max">--</span></div>
+    </div>
+  </div>
+  <div id="status-bar"><span class="status-dot"></span><span id="status-text">Bereit</span><span id="info-fps"></span><span style="margin-left:auto">Maus: Drehen / Scroll: Zoomen / Klick: Detail</span></div>
+</div>
+<div id="detail-panel"><button class="detail-close" id="detail-close">&times;</button>
+  <div class="detail-header"><div class="detail-id" id="detail-id">--</div><div class="detail-name" id="detail-name">--</div></div>
+  <div class="detail-body">
+    <div class="detail-row"><span class="dr-label">Materialgruppe</span><span class="dr-value" id="detail-group">--</span></div>
+    <div class="detail-row"><span class="dr-label">Material</span><span class="dr-value" id="detail-material">--</span></div>
+    <div class="detail-row"><span class="dr-label">Laenge</span><span class="dr-value" id="detail-length">--</span></div>
+    <div class="detail-row"><span class="dr-label">Volumen</span><span class="dr-value" id="detail-volume">--</span></div>
+    <div class="detail-row"><span class="dr-label">Masse</span><span class="dr-value" id="detail-mass">--</span></div>
+    <div class="detail-co2"><div class="detail-co2-item"><div class="co2-val" id="detail-co2-a1a3" style="color:#22c55e">--</div><div class="co2-label">A1-A3</div></div><div class="detail-co2-item"><div class="co2-val" id="detail-co2-c" style="color:#eab308">--</div><div class="co2-label">C</div></div><div class="detail-co2-item"><div class="co2-val" id="detail-co2-d" style="color:#a855f7">--</div><div class="co2-label">D</div></div></div>
+  </div>
+</div>
+<div id="tooltip"></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const STATE = { variant: 'standard', module: 'A1A3', selected: null, hovered: null };
+
+function co2Color(t) {
+  const v = Math.max(-1, Math.min(1, t));
+  if (v < 0) return new THREE.Color(0x22c55e).lerp(new THREE.Color(0xa855f7), Math.min(-v, 1));
+  if (v < 0.25) return new THREE.Color(0x22c55e).lerp(new THREE.Color(0x84cc16), v/0.25);
+  if (v < 0.5) return new THREE.Color(0x84cc16).lerp(new THREE.Color(0xeab308), (v-0.25)/0.25);
+  if (v < 0.75) return new THREE.Color(0xeab308).lerp(new THREE.Color(0xf97316), (v-0.5)/0.25);
+  return new THREE.Color(0xf97316).lerp(new THREE.Color(0xef4444), (v-0.75)/0.25);
+}
+
+function getCo2(member) {
+  const mod = STATE.module, vr = STATE.variant;
+  if (mod === 'A1A3') return vr === 'standard' ? (member.co2_std||0) : (member.co2_alt||0);
+  if (mod === 'C') return member.co2_c || 0;
+  if (mod === 'D') return member.co2_d || 0;
+  if (mod === 'TOTAL') return (member.co2_std||0)+(member.co2_c||0)+(member.co2_d||0);
+  return 0;
+}
+
+function profName(layer) { return layer.split('::').pop(); }
+
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e0e10);
+
+const camera = new THREE.PerspectiveCamera(40, container.clientWidth/container.clientHeight, 0.01, 200);
+camera.position.set(20, 10, 18);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+container.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.06;
+controls.target.set(11.5, 1.5, 0);
+controls.minDistance = 3; controls.maxDistance = 60;
+
+const ambLight = new THREE.AmbientLight(0xffffff, 0.3); scene.add(ambLight);
+const hemiLight = new THREE.HemisphereLight(0xb1e1ff, 0xb97a20, 0.4); scene.add(hemiLight);
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(15, 20, 10); dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(1024,1024);
+Object.assign(dirLight.shadow.camera, {near:1,far:50,left:-20,right:20,top:10,bottom:-10});
+scene.add(dirLight);
+const fillLight = new THREE.DirectionalLight(0x8899bb, 0.25);
+fillLight.position.set(-10, 5, -10); scene.add(fillLight);
+
+const groundMat = new THREE.MeshStandardMaterial({color:0x151518,roughness:0.9});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(60,60), groundMat);
+ground.rotation.x = -Math.PI/2; ground.position.y = -0.01; ground.receiveShadow = true;
+scene.add(ground);
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const tooltipEl = document.getElementById('tooltip');
+
+let meshes = [];
+let minVal = Infinity, maxVal = -Infinity;
+let totals = { std: 0, alt: 0 };
+
+async function load() {
+  try {
+    setStatus('Lade Daten...', false);
+    const r = await fetch('data.json');
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    totals.std = data.totals.total_std_kg;
+    totals.alt = data.totals.total_alt_kg;
+
+    for (const md of data.meshes) {
+      if (!md.verts || !md.faces?.length) continue;
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(md.verts.flat(), 3));
+      const idx = [];
+      for (const f of md.faces) {
+        if (f.length===3) idx.push(f[0],f[1],f[2]);
+        else if (f.length===4) idx.push(f[0],f[1],f[2],f[0],f[2],f[3]);
+      }
+      if (idx.length) { geo.setIndex(idx); geo.computeVertexNormals(); }
+
+      // Link to member by ID if available, otherwise by layer
+      let match = null;
+      if (data.members && md.member_id) {
+        match = data.members.find(m => m.id === md.member_id);
+      }
+      if (!match) match = {};
+      
+      const mat = new THREE.MeshPhysicalMaterial({color:new THREE.Color(0x888890),metalness:0.3,roughness:0.6});
+      const obj = new THREE.Mesh(geo, mat);
+      obj.userData = { id: md.member_id||'', layer: md.layer, member: match, prof: profName(md.layer), idx: meshes.length };
+      obj.castShadow = true; obj.receiveShadow = true;
+      meshes.push(obj); scene.add(obj);
+    }
+
+    // Add RD 12 cylinder approximations
+    const stub = data.rd12_stub;
+    if (stub) {
+      const sampleCount = Math.min(stub.count, 15);
+      for (let i = 0; i < sampleCount; i++) {
+        const col = i % 5, row = Math.floor(i / 5);
+        const x = 7.0 + col * 1.5, y = -10.0 + row * 2.5, z = 4.2;
+        const geo = new THREE.CylinderGeometry(0.006, 0.006, 2.5, 8, 1);
+        geo.translate(x, y, z);
+        geo.rotateZ(Math.PI/2);
+        const mat = new THREE.MeshPhysicalMaterial({color:new THREE.Color(0x888890),metalness:0.3,roughness:0.6});
+        const obj = new THREE.Mesh(geo, mat);
+        obj.userData = { id:'rd12_'+i, layer:'RD 12', member:{co2_std:stub.co2_std,co2_alt:stub.co2_alt,co2_c:stub.co2_c,co2_d:stub.co2_d}, prof:'RD 12', idx:meshes.length };
+        obj.castShadow=true; obj.receiveShadow=true;
+        meshes.push(obj); scene.add(obj);
+      }
+    }
+
+    refreshColors(); updateStats(); updateBreakdown();
+    document.getElementById('loading').classList.add('hidden');
+    setStatus(meshes.length+' Staebe geladen', false);
+  } catch(e) { console.error(e); document.getElementById('loading').querySelector('.loading-text').textContent='Fehler: '+e.message; }
+}
+
+function refreshColors() {
+  minVal=Infinity; maxVal=-Infinity;
+  for (const m of meshes) {
+    const v = getCo2(m.userData.member||{});
+    if(v<minVal) minVal=v; if(v>maxVal) maxVal=v;
+  }
+  if(!isFinite(minVal)){minVal=0;maxVal=1;}
+  for (const m of meshes) {
+    const range = maxVal-minVal||1, norm = (getCo2(m.userData.member||{})-minVal)/range;
+    m.material.color.copy(co2Color(norm));
+  }
+  updateStats(); updateLegend();
+}
+
+function updateStats() {
+  let total=0; for (const m of meshes) total+=getCo2(m.userData.member||{});
+  document.getElementById('total-co2').innerHTML=total.toFixed(0)+'<span class="stat-unit">kg</span>';
+  document.getElementById('member-count').textContent=meshes.length;
+  const sp=((totals.std-totals.alt)/totals.std*100);
+  document.getElementById('savings-fill').style.width=sp+'%';
+  document.getElementById('savings-pct').textContent=sp.toFixed(1)+'%';
+}
+
+function updateLegend() {
+  document.getElementById('legend-min').textContent=minVal.toFixed(1);
+  document.getElementById('legend-max').textContent=maxVal.toFixed(1);
+}
+
+function updateBreakdown() {
+  const g={};
+  for (const m of meshes) {
+    const p=m.userData.prof;
+    if(!g[p]) g[p]={c:0,v:0};
+    g[p].c++; g[p].v+=getCo2(m.userData.member||{});
+  }
+  const entries=Object.entries(g).sort((a,b)=>b[1].v-a[1].v);
+  document.getElementById('breakdown').innerHTML=entries.map(([n,d])=>'<div class="bk-item"><span class="bk-name">'+n+'</span><span class="bk-val">'+d.v.toFixed(0)+' kg</span></div>').join('');
+}
+
+function selectMesh(obj) {
+  if (STATE.selected && STATE.selected!==obj) STATE.selected.material.emissive?.setHex(0x000000);
+  STATE.selected=obj;
+  const dp=document.getElementById('detail-panel');
+  if (!obj){dp.classList.remove('visible');return;}
+  const u=obj.userData, m=u.member||{};
+  document.getElementById('detail-id').textContent='ID: '+u.id;
+  document.getElementById('detail-name').textContent=u.prof;
+  const isSteel=u.layer.includes('Flat Bar')||u.layer.includes('RO ')||u.layer.includes('RD ');
+  const isConcrete=u.layer.includes('Rectangle');
+  document.getElementById('detail-group').textContent=isSteel?'Baustahl S235JR':isConcrete?'Beton C25/30':'-';
+  document.getElementById('detail-material').textContent=isSteel?'Stahl':isConcrete?'Beton':'-';
+  document.getElementById('detail-length').textContent=u.layer.includes('RD')?'~2.50 m':'-- m';
+  document.getElementById('detail-volume').textContent='-- m3';
+  document.getElementById('detail-mass').textContent='-- kg';
+  document.getElementById('detail-co2-a1a3').textContent=(m.co2_std||0).toFixed(2)+' kg';
+  document.getElementById('detail-co2-c').textContent=(m.co2_c||0).toFixed(2)+' kg';
+  document.getElementById('detail-co2-d').textContent=(m.co2_d||0).toFixed(2)+' kg';
+  dp.classList.add('visible');
+}
+
+renderer.domElement.addEventListener('mousemove', e => {
+  const rect=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(meshes,false);
+  if(hits.length){
+    const hit=hits[0].object;
+    if(hit!==STATE.hovered){
+      if(STATE.hovered&&STATE.hovered!==STATE.selected) STATE.hovered.material.emissive?.setHex(0x000000);
+      STATE.hovered=hit;
+      if(hit!==STATE.selected) hit.material.emissive?.setHex(0x1a1a2e);
+      const cv=getCo2(hit.userData.member||{});
+      tooltipEl.innerHTML='<strong>'+hit.userData.prof+'</strong><br>'+cv.toFixed(2)+' kg CO2e';
+      tooltipEl.style.left=e.clientX+12+'px'; tooltipEl.style.top=e.clientY-10+'px';
+      tooltipEl.classList.add('visible');
+      renderer.domElement.style.cursor='pointer';
+    }else{tooltipEl.style.left=e.clientX+12+'px';tooltipEl.style.top=e.clientY-10+'px';}
+  }else{
+    if(STATE.hovered&&STATE.hovered!==STATE.selected) STATE.hovered.material.emissive?.setHex(0x000000);
+    STATE.hovered=null; tooltipEl.classList.remove('visible'); renderer.domElement.style.cursor='default';
+  }
+});
+
+renderer.domElement.addEventListener('click', ()=>{
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(meshes,false);
+  selectMesh(hits.length?hits[0].object:null);
+});
+
+document.getElementById('detail-close').addEventListener('click',()=>selectMesh(null));
+
+document.querySelectorAll('.toggle-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.toggle-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');STATE.variant=b.dataset.mat;refreshColors();
+}));
+
+document.querySelectorAll('.module-btn').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.module-btn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');STATE.module=b.dataset.mod;refreshColors();
+}));
+
+function setStatus(text,warn){document.getElementById('status-text').textContent=text;const d=document.querySelector('.status-dot');d.className='status-dot'+(warn?' warn':'');}
+
+window.addEventListener('resize',()=>{
+  const w=container.clientWidth,h=container.clientHeight;
+  camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);
+});
+
+let fc=0,ft=performance.now();
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);fc++;const n=performance.now();if(n-ft>=1000){document.getElementById('info-fps').textContent=fc+' FPS';fc=0;ft=n;}}
+
+load().then(()=>animate());
+</script>
+</body>
+</html>
